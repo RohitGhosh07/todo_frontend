@@ -1,32 +1,45 @@
 import React from 'react';
 import { AiOutlineClose } from 'react-icons/ai';
 
-const Modal = ({ isOpen, onClose, onSubmit }) => {
+const Modal = ({ isOpen, onClose, onSubmit, task }) => {
     const [title, setTitle] = React.useState('');
     const [description, setDescription] = React.useState('');
     const [status, setStatus] = React.useState('To Do');
-    const userId = localStorage.getItem('userId'); // Get user id from local storage
+    const user = localStorage.getItem('userId'); // Get user id from local storage
+
+    React.useEffect(() => {
+        if (task) {
+            setTitle(task.title || '');
+            setDescription(task.description || '');
+            setStatus(task.status || 'To Do');
+        } else {
+            setTitle('');
+            setDescription('');
+            setStatus('To Do');
+        }
+    }, [task]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSubmit({ title, description, status, userId });
-        setTitle('');
-        setDescription('');
-        setStatus('To Do');
+        const taskData = { title, description, status, user, _id: task?._id };
+        console.log('Task to be submitted:', taskData); // Log the task object
+        onSubmit(taskData);
     };
 
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
-            <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-11/12 md:w-1/2 lg:w-1/3">
+            <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-11/12 md:w-1/2 lg:w-1/3 relative">
                 <button
                     className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
                     onClick={onClose}
                 >
                     <AiOutlineClose className="text-2xl" />
                 </button>
-                <h2 className="text-xl font-bold mb-4">Add New Task</h2>
+                <h2 className="text-xl font-bold mb-4">
+                    {task ? 'Edit Task' : 'Add New Task'}
+                </h2>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
                         <label className="block text-gray-300 mb-2">Title</label>
@@ -64,7 +77,7 @@ const Modal = ({ isOpen, onClose, onSubmit }) => {
                         type="submit"
                         className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                     >
-                        Add Task
+                        {task ? 'Update Task' : 'Add Task'}
                     </button>
                 </form>
             </div>

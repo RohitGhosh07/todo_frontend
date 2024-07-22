@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom'; // For redirection
 import Snackbar from '../components/Snackbar'; // Import the custom Snackbar component
+import { FcGoogle } from 'react-icons/fc';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [snackbar, setSnackbar] = useState({ message: '', type: '' });
+    const [error, setError] = useState('');
+
     const navigate = useNavigate(); // Initialize navigate function
 
     const handleLogin = async (event) => {
         event.preventDefault();
 
         try {
-            const response = await fetch('http://localhost:5000/users/login', {
+            const response = await fetch('https://todo-backend-lxj7alwyt-ionicthors-projects.vercel.app/users/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -40,7 +44,53 @@ const Login = () => {
     const handleCloseSnackbar = () => {
         setSnackbar({ message: '', type: '' });
     };
-
+    const googleLogin = useGoogleLogin({
+        onSuccess: async (response) => {
+          console.log('Google OAuth Response:', response);
+    
+          try {
+            // Fetch user profile information using the access token
+            const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+              headers: {
+                'Authorization': `Bearer ${response.access_token}`,
+              },
+            });
+    
+            if (!userInfoResponse.ok) {
+              throw new Error('Failed to fetch user info');
+            }
+    
+            const userInfo = await userInfoResponse.json();
+    
+            console.log('User Info:', userInfo);
+    
+            // Send user info to your backend
+            const serverRes = await fetch('http://localhost:5000/users/google-login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ userInfo }),
+            });
+    
+            const result = await serverRes.json();
+    
+            if (serverRes.ok) {
+              window.location.href = '/home';
+            } else {
+              setError(result.msg || 'Google login failed');
+            }
+          } catch (err) {
+            console.error('Server error:', err);
+            setError('Server error');
+          }
+        },
+        onError: () => {
+          setError('Google login failed');
+        },
+      });
+    
+    
     return (
         <div className="h-screen bg-gray-900 flex flex-col">
             {/* Navbar */}
@@ -108,9 +158,9 @@ const Login = () => {
                             <button
                                 className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline flex items-center justify-center w-full"
                                 type="button"
+                                onClick={() => googleLogin()}
                             >
-                                {/* Replace with your Google icon */}
-                                <span className="mr-2">G</span> Sign in with Google
+                                <FcGoogle className="mr-2" /> Sign up with Google
                             </button>
                         </div>
                     </form>

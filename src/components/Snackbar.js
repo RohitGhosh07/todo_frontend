@@ -1,7 +1,20 @@
+import React, { useEffect } from 'react';
+
 // Snackbar.js
-import React from 'react';
 
 const Snackbar = ({ message, type, onClose }) => {
+    useEffect(() => {
+        if (message) {
+            const timer = setTimeout(() => {
+                onClose();
+            }, 3000);
+
+            return () => {
+                clearTimeout(timer);
+            };
+        }
+    }, [message, onClose]);
+
     if (!message) return null;
 
     let bgColor;
